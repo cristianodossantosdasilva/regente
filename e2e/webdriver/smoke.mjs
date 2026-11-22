@@ -6,6 +6,9 @@ import { ENTER, ROOT, Session, reporter, sleep, waitFor } from "./lib.mjs";
 const app = process.argv[2];
 if (!app) throw new Error("uso: node smoke.mjs <caminho do regente-app>");
 const { check, done } = reporter();
+// Espera o prompt do shell voltar. O broker injeta a mensagem e só envia o Enter ~180 ms depois; digitar antes disso
+// misturaria o texto com o Enter dele (uma pessoa ou um agente só responde depois do prompt).
+const atPrompt = (title) => waitFor(async () => (/[$#]\s*$/.test(await s.termText(title)) ? true : null), 10000);
 const s = await Session.start(app);
 let code = 1;
 try {
@@ -56,10 +59,12 @@ try {
   // 5) mensagens entre dois terminais
   await s.typeIn(first, "regente peers");
   check("`regente peers` lista o Worker conectado", !!(await waitFor(async () => ((await s.termText(first)).includes("<-> Worker") ? true : null))));
+  await atPrompt(first);
   await s.typeIn(first, 'regente send Worker "ola-do-linux"');
   const got = await waitFor(async () => ((await s.termText("Worker")).includes("ola-do-linux") ? true : null));
   check("mensagem do coordenador chega ao Worker pelo broker", !!got);
 
+  await atPrompt("Worker");
   await s.typeIn(first, 'regente ask Worker "tudo certo?" --wait');
   const id = await waitFor(async () => {
     const m = (await s.termText("Worker")).match(/id ([0-9a-f]{8})/g);
@@ -67,6 +72,7 @@ try {
   });
   check("pergunta chega ao Worker com um id", !!id, id ?? "");
   if (id) {
+    await atPrompt("Worker");
     await s.typeIn("Worker", `regente reply ${id} "sim-linux-ok"`);
     const back = await waitFor(async () => ((await s.termText(first)).includes("sim-linux-ok") ? true : null));
     check("a resposta volta para o `ask --wait` do coordenador", !!back);
