@@ -1,6 +1,7 @@
 # Changelog
 
 ## Não lançado
+- **Linux**: E2E de interface por WebDriver (`e2e/run-linux.sh`, 13 verificações). Corrige o shell padrão no Unix (usava o `pwsh.exe` do Windows no WSL; agora `$SHELL`).
 - **Linux e macOS (experimental)**: broker por socket Unix, encerramento de grupos de processos, pré-execução por `sh`, pasta de dados por plataforma. Backend testado no Ubuntu 24.04 (56 testes de Rust) e no CI do macOS; interface ainda não validada.
 - Release: `scripts/release.ps1` remove caminhos pessoais dos binários; `tauri.bundle.conf.json` separa os recursos do instalador (`cargo test` funciona em cópia nova).
 - `regente peers` com identidade e estado; `status`, `notify`, `debug`, `keys` (permissão por conexão); notas por faixa/`edit`/`write`; `ask --batch`.

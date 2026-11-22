@@ -29,7 +29,7 @@ O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**; n
 | 3. Pré-execução de rotinas | ✅ testado no Linux | `sh -c`, grupo de processos próprio. A tela ainda diz "PowerShell" |
 | 4. Pasta de dados | ✅ confirmado no Linux | `$XDG_DATA_HOME`/`~/.local/share/Regente`; macOS `~/Library/Application Support/Regente` (não verificado) |
 | 5. Sufixo de executável | ✅ escrito | `EXE_SUFFIX` |
-| 6. Shell padrão | 🟡 não exercitado pela interface | `$SHELL`; o ramo POSIX de `spawn.ts` precisa de teste pela UI |
+| 6. Shell padrão | ✅ testado no Linux (E2E) | `$SHELL` ou `/bin/sh`. Um bug foi achado e corrigido: no WSL a função escolhia o `pwsh.exe` do Windows; agora **nunca** procura executáveis do Windows fora do Windows |
 | 7. Empacotamento (deb/AppImage/dmg), ícones, assinatura | ❌ não feito | |
 | 8. Testes parametrizados | ✅ feito | terminal de teste, pré-execução, carga e socket cru por plataforma |
 | 9. CI Linux/macOS | ✅ roda a suíte completa em modo experimental | |
@@ -51,7 +51,16 @@ npx tauri build --debug --no-bundle              # app em target/debug/regente-a
 # abrir sem monitor (teste de fumaça):
 xvfb-run -a ./target/debug/regente-app
 ```
-No WSL2 com WSLg (Windows 11) dá para abrir a janela do app direto, sem `xvfb-run`. Falta ainda um roteiro E2E para Linux (WebDriver).
+No WSL2 com WSLg (Windows 11) dá para abrir a janela do app direto, sem `xvfb-run`.
+
+**E2E de interface no Linux** (WebDriver):
+```bash
+sudo apt install webkit2gtk-driver xvfb xauth
+cargo install tauri-driver --locked
+cargo build -p regente-cli && npx tauri build --debug --no-bundle
+bash e2e/run-linux.sh          # 13 verificações; usa pastas temporárias, não toca nos seus dados
+```
+O roteiro está em `e2e/webdriver/smoke.mjs` (cliente WebDriver cru, sem dependências). Para ampliar a cobertura (nós, rotinas, templates, importação), siga o padrão dos roteiros do Windows em `e2e/*.mjs`.
 
 ## Pré-requisitos de build
 
