@@ -83,9 +83,11 @@ try {
   }
 
   // 6) dispensar
+  await atPrompt(first);
   await s.typeIn(first, "regente dismiss Worker");
   const gone = await waitFor(async () => (!(await s.nodeTitles()).includes("Worker") ? true : null));
   check("`regente dismiss` remove o Worker", !!gone, (await s.nodeTitles()).join(","));
+  if (!gone) console.log("DIAG Shell :", (await s.termText(first)).slice(-400));
   code = done();
 } catch (e) {
   console.log("ERRO:", e.message);
