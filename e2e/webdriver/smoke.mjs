@@ -70,6 +70,10 @@ try {
     await s.typeIn("Worker", `regente reply ${id} "sim-linux-ok"`);
     const back = await waitFor(async () => ((await s.termText(first)).includes("sim-linux-ok") ? true : null));
     check("a resposta volta para o `ask --wait` do coordenador", !!back);
+    if (!back) {
+      console.log("DIAG Worker :", (await s.termText("Worker")).slice(-500));
+      console.log("DIAG Shell  :", (await s.termText(first)).slice(-500));
+    }
   }
 
   // 6) dispensar
