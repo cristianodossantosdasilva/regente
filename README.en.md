@@ -8,7 +8,7 @@ An infinite canvas to orchestrate **coding agents** (Claude Code, Kiro, Antigrav
 | Platform | Status |
 |---|---|
 | **Windows 10/11 x64** | ✅ Supported and tested |
-| **Linux** | 🧪 **Experimental.** The backend (Unix-socket broker, terminals, routines, coordinator) passes its tests on Ubuntu 24.04 and the app builds and starts. The **UI has not been validated** by a person or by E2E yet. No installer: build from source ([docs/INSTALL.md](docs/INSTALL.md), Portuguese) |
+| **Linux** | 🧪 **Experimental.** The backend passes its tests on Ubuntu 24.04 and a **UI E2E** (13 checks, WebDriver) creates a workspace, opens a real bash and exchanges messages between two terminals over the Unix socket. **No person has used the UI on Linux yet.** No installer: build from source ([docs/INSTALL.md](docs/INSTALL.md), Portuguese) |
 | **macOS** | 🧪 **Experimental.** GitHub CI (real macOS) builds the app and passes the backend tests. **Nobody has used the UI on a Mac yet.** No installer: build from source |
 
 ## Install (Windows)

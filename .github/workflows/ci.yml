@@ -62,3 +62,11 @@ jobs:
         run: cargo check -p regente-cli
       - name: Testes do Rust (experimental; veja docs/PORTING.md)
         run: cargo test --workspace -- --test-threads=1
+      - name: E2E de interface no Linux (WebDriver + Xvfb)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y webkit2gtk-driver xvfb xauth
+          cargo install tauri-driver --locked
+          cargo build -p regente-cli
+          npx tauri build --debug --no-bundle
+          bash e2e/run-linux.sh

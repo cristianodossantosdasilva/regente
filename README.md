@@ -11,7 +11,7 @@ Canvas infinito para orquestrar **agentes de código** (Claude Code, Kiro, Antig
 | Plataforma | Situação |
 |---|---|
 | **Windows 10/11 (x64)** | ✅ Suportado e testado (instalador `.exe`, testes automáticos e E2E no app real) |
-| **Linux** | 🧪 **Experimental**. O backend (broker por socket Unix, terminais, rotinas, coordenador) passa nos testes no Ubuntu 24.04 e o app compila e abre. A **interface ainda não foi validada** por uma pessoa nem por E2E. Sem instalador: compile do código ([docs/INSTALL.md](docs/INSTALL.md)) |
+| **Linux** | 🧪 **Experimental**. O backend passa nos testes no Ubuntu 24.04 e um **E2E de interface** (13 verificações, WebDriver) cria workspace, abre um bash real e troca mensagens entre dois terminais pelo socket Unix. **Nenhuma pessoa usou a interface no Linux ainda.** Sem instalador: compile do código ([docs/INSTALL.md](docs/INSTALL.md)) |
 | **macOS** | 🧪 **Experimental**. O CI do GitHub (macOS real) compila o app e passa os testes do backend. **Ninguém usou a interface num Mac ainda.** Sem instalador: compile do código |
 
 Linux e macOS: veja o estado detalhado e como ajudar em [docs/PORTING.md](docs/PORTING.md). O Regente é jovem (versão 0.1.0). Veja o que existe e o que vem a seguir em [docs/FEATURES.md](docs/FEATURES.md) e [docs/ROADMAP.md](docs/ROADMAP.md).

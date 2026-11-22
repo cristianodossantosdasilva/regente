@@ -5,7 +5,7 @@
 | Plataforma | Situação | Observações |
 |---|---|---|
 | Windows 10/11 x64 | ✅ Suportado | Precisa do **WebView2 Runtime** (já vem no Windows 11 e nas versões atuais do Windows 10) |
-| Linux | 🧪 Experimental (compilar do código) | Backend testado no Ubuntu 24.04; interface **não validada**; sem instalador |
+| Linux | 🧪 Experimental (compilar do código) | Backend e um E2E de interface testados no Ubuntu 24.04; **nenhuma pessoa usou a interface ainda**; sem instalador |
 | macOS | 🧪 Experimental (compilar do código) | O CI do GitHub compila e testa o backend; **ninguém usou a interface num Mac ainda**; sem instalador |
 
 > Em Linux e macOS **não há binário pronto**: é preciso compilar (seção abaixo). O estado detalhado, o que foi e o que não foi verificado, está em [PORTING.md](PORTING.md). Relatos de quem testar são muito bem-vindos.

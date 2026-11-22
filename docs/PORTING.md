@@ -14,10 +14,11 @@ O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**; n
 | Linux: `tsc` e `npm test` | ✅ 42 testes do front |
 | Linux: compilar o app (`npx tauri build --debug --no-bundle`) | ✅ |
 | Linux: abrir o app sob **Xvfb** (tela virtual) | ✅ o processo sobe e fica de pé; o broker cria `…/regente/broker-<pid>.sock` com diretório `0700` e socket `0600`; os dados vão para `$XDG_DATA_HOME/Regente` |
-| Linux: **criar terminais pela interface**, rodar `regente …` dentro deles, E2E de interface | ❌ **não verificado**: o WebKitGTK não expõe o DevTools Protocol do WebView2; é preciso `tauri-driver`/WebDriver |
+| Linux: **E2E de interface** (`bash e2e/run-linux.sh`, WebDriver via `tauri-driver` + Xvfb): workspace, bash real, `regente debug/status/peers/send/ask/reply`, coordenador (`recruit`/`dismiss`) | ✅ **13 de 13** |
+| Linux: uso por uma pessoa, E2E dos demais recursos (nós, rotinas, templates, importação) | ❌ não verificado |
 | Linux: build de **release**, empacotamento (deb/AppImage) | ❌ não verificado |
 | **macOS** (CI do GitHub, hardware Apple real): compilar o app e `cargo test --workspace` | ✅ passa (com um ajuste no teste de `read`, veja "Limitação conhecida") |
-| macOS: abrir a interface, terminais, E2E | ❌ não verificado por ninguém |
+| macOS: abrir a interface, terminais, E2E | ❌ não verificado por ninguém. O `tauri-driver` **não suporta macOS** (não há driver para o WKWebView), então só uma pessoa com um Mac consegue validar a interface |
 
 > **macOS e virtualização**: não use hackintosh nem VM de macOS em hardware não-Apple (a licença da Apple proíbe). O caminho legítimo e gratuito é o CI do GitHub (`macos-latest`) ou um Mac de verdade.
 
