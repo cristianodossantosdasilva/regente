@@ -32,6 +32,9 @@ O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**. O
 | 8. Testes parametrizados | ✅ feito | terminal de teste, pré-execução, carga e socket cru por plataforma |
 | 9. CI Linux/macOS | ✅ roda a suíte completa em modo experimental | |
 
+### Limitação conhecida (macOS)
+O `/bin/sh` do macOS é o bash com *readline*, que redesenha linhas longas com movimentos de cursor. O `regente read` aproxima o conteúdo do terminal e pode **perder o começo de linhas longas** nesse shell (o texto injetado chega normalmente; é só a leitura que fica imperfeita). Melhorar isso é uma das tarefas do item "estado de terminal confiável" (parser de terminal completo) em [FEATURES.md](FEATURES.md).
+
 ### Como compilar e testar no Linux (verificado no Ubuntu 24.04)
 ```bash
 sudo apt install build-essential curl wget file libxdo-dev libssl-dev \
