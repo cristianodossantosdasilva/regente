@@ -4,6 +4,30 @@
 
 > Nenhuma das mudanças abaixo foi feita nem testada: o mantenedor desenvolve no Windows. Quem fizer o port deve **rodar a suíte de testes na plataforma** (veja [TESTING.md](TESTING.md)) e abrir um PR por etapa.
 
+## Estado do port (branch `port/unix`)
+O código das etapas 1 a 6 abaixo **já foi escrito** na branch `port/unix`, mas **nunca foi executado em Linux ou macOS**. O que foi verificado:
+
+| Verificação | Resultado |
+|---|---|
+| Testes completos no **Windows** (a lógica de conexão agora é compartilhada com o socket Unix) | ✅ 59 de Rust + 42 do front |
+| `cargo check -p regente-cli --target x86_64-unknown-linux-gnu` (o CLI e o cliente do socket) | ✅ compila |
+| `cargo check` do **app** para Linux/macOS | ❌ não foi possível no ambiente do autor (precisa do WebKitGTK/Xcode); **fica para o CI** |
+| Execução e testes em Linux/macOS | ❌ **pendente** — é aqui que a comunidade pode ajudar |
+
+| Etapa | Código na branch | Observação |
+|---|---|---|
+| 1. Transporte por socket Unix | ✅ escrito | `broker.rs::serve` (`#[cfg(unix)]`), cliente em `cli/src/lib.rs`; diretório `0700`, socket `0600` |
+| 2. Encerrar árvores de processos | ✅ escrito | `kill(-pgid, SIGKILL)` em `pty.rs` e `broker.rs` |
+| 3. Pré-execução de rotinas | ✅ escrito | `sh -c` fora do Windows, em grupo de processos próprio. A tela ainda diz "PowerShell" |
+| 4. Pasta de dados | ✅ escrito | `$XDG_DATA_HOME` / `~/.local/share/Regente` e `~/Library/Application Support/Regente` |
+| 5. Sufixo de executável | ✅ escrito | `EXE_SUFFIX` |
+| 6. Shell padrão | ✅ já existia | `$SHELL`; o ramo POSIX de `spawn.ts` **nunca foi exercitado** |
+| 7. Empacotamento (deb/AppImage/dmg), ícones, assinatura | ❌ não feito | |
+| 8. Testes parametrizados | 🟡 parcial | terminal de teste (`sh`) e pré-execução; falta revisar o resto |
+| 9. CI Linux/macOS | 🟡 parcial | roda os testes em modo experimental |
+
+**Como ajudar agora**: faça o checkout da branch `port/unix` no Linux/macOS, rode `cargo test --workspace -- --test-threads=1` e abra uma issue ou PR com o resultado (erros de compilação, testes que falham, comportamento do terminal).
+
 ## Pré-requisitos de build
 
 **Linux** (Debian/Ubuntu; outros usam os pacotes equivalentes — veja o guia de pré-requisitos do Tauri 2):

@@ -3105,6 +3105,7 @@ dependencies = [
 name = "regente-app"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "portable-pty",
  "regente-cli",
  "serde",

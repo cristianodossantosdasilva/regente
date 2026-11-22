@@ -27,7 +27,7 @@ fn twenty_terminals_stay_responsive_and_bounded() {
         m.spawn(
             SpawnSpec {
                 id: format!("t{i}"),
-                program: "cmd.exe".into(),
+                program: (if cfg!(windows) { "cmd.exe" } else { "sh" }).into(),
                 args: vec![],
                 cwd: None,
                 env: HashMap::new(),

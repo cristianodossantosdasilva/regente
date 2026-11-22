@@ -11,6 +11,13 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+/// Comando de pré-execução que imprime `abc123` (PowerShell no Windows, sh nas demais plataformas).
+const PRE_OUT: &str = if cfg!(windows) {
+    "Write-Output 'abc123'"
+} else {
+    "echo abc123"
+};
+
 struct Harness {
     state: Arc<AppState>,
     events: Arc<Mutex<Vec<(String, Value)>>>,
@@ -44,7 +51,7 @@ fn spawn_cmd(state: &AppState, id: &str) {
         .spawn(
             SpawnSpec {
                 id: id.into(),
-                program: "cmd.exe".into(),
+                program: (if cfg!(windows) { "cmd.exe" } else { "sh" }).into(),
                 args: vec![],
                 cwd: None,
                 env: HashMap::new(),
@@ -586,7 +593,7 @@ fn routine_fire_injects_honours_pause_prerun_and_reminder() {
         .contains("rotina-simples-ok"));
     // pré-execução com {{output}}
     assert_eq!(
-        fire("saida={{output}}", Some("Write-Output 'abc123'"), false).unwrap(),
+        fire("saida={{output}}", Some(PRE_OUT), false).unwrap(),
         "enviada"
     );
     assert!(h.wait_output("b", "saida=abc123").contains("saida=abc123"));

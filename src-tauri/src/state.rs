@@ -30,6 +30,27 @@ pub struct AppState {
     pub sys: Mutex<System>,
 }
 
+/// Endereço do broker: *named pipe* no Windows; socket Unix num diretório **só do usuário** nas demais plataformas.
+pub fn default_endpoint() -> String {
+    let pid = std::process::id();
+    #[cfg(windows)]
+    {
+        format!(r"\\.\pipe\regente-broker-{pid}")
+    }
+    #[cfg(unix)]
+    {
+        let base = std::env::var_os("XDG_RUNTIME_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                std::env::temp_dir().join(format!("regente-{}", unsafe { libc::getuid() }))
+            });
+        base.join("regente")
+            .join(format!("broker-{pid}.sock"))
+            .display()
+            .to_string()
+    }
+}
+
 impl AppState {
     /// Gera um segredo novo para o terminal (256 bits) e o registra.
     pub fn issue_token(&self, term: &str) -> String {
@@ -62,7 +83,7 @@ impl AppState {
             confirms: Mutex::new(HashMap::new()),
             coords: Mutex::new(HashMap::new()),
             term_tokens: Mutex::new(HashMap::new()),
-            pipe_name: format!(r"\\.\pipe\regente-broker-{}", std::process::id()),
+            pipe_name: default_endpoint(),
             data_dir,
             cli_dir,
             sys: Mutex::new(System::new()),

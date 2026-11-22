@@ -820,6 +820,39 @@ impl Ctx {
     }
 }
 
+/// Atende uma conexão do broker (uma linha JSON por requisição). Compartilhada pelo named pipe (Windows) e pelo socket Unix.
+async fn serve_connection<S>(c: Ctx, conn: S)
+where
+    S: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
+{
+    let (r, mut w) = tokio::io::split(conn);
+    let mut reader = BufReader::new(r);
+    let mut line = String::new();
+    loop {
+        line.clear();
+        let n = match (&mut reader).take(MAX_LINE).read_line(&mut line).await {
+            Ok(n) => n,
+            Err(_) => break,
+        };
+        if n == 0 {
+            break;
+        }
+        if !line.ends_with('\n') && n as u64 >= MAX_LINE {
+            let _ = w
+                .write_all(b"{\"id\":null,\"error\":{\"message\":\"requisicao grande demais\"}}\n")
+                .await;
+            break;
+        }
+        if line.trim().is_empty() {
+            continue;
+        }
+        let out = c.handle_line(&line).await;
+        if w.write_all(format!("{out}\n").as_bytes()).await.is_err() {
+            break;
+        }
+    }
+}
+
 #[cfg(windows)]
 pub async fn serve(ctx: Ctx) {
     use tokio::net::windows::named_pipe::ServerOptions;
@@ -852,42 +885,49 @@ pub async fn serve(ctx: Ctx) {
         };
         let conn = std::mem::replace(&mut server, next);
         let c = ctx.clone();
-        tauri::async_runtime::spawn(async move {
-            let (r, mut w) = tokio::io::split(conn);
-            let mut reader = BufReader::new(r);
-            let mut line = String::new();
-            loop {
-                line.clear();
-                let n = match (&mut reader).take(MAX_LINE).read_line(&mut line).await {
-                    Ok(n) => n,
-                    Err(_) => break,
-                };
-                if n == 0 {
-                    break;
-                }
-                if !line.ends_with('\n') && n as u64 >= MAX_LINE {
-                    let _ = w
-                        .write_all(
-                            b"{\"id\":null,\"error\":{\"message\":\"requisicao grande demais\"}}\n",
-                        )
-                        .await;
-                    break;
-                }
-                if line.trim().is_empty() {
-                    continue;
-                }
-                let out = c.handle_line(&line).await;
-                if w.write_all(format!("{out}\n").as_bytes()).await.is_err() {
-                    break;
-                }
-            }
-        });
+        tauri::async_runtime::spawn(serve_connection(c, conn));
     }
 }
 
-#[cfg(not(windows))]
+/// Servidor por socket Unix (Linux/macOS). **Experimental**: ainda não foi exercitado em CI (veja docs/PORTING.md).
+#[cfg(unix)]
+pub async fn serve(ctx: Ctx) {
+    use std::os::unix::fs::PermissionsExt;
+    use tokio::net::UnixListener;
+    let path = std::path::PathBuf::from(&ctx.state.pipe_name);
+    if let Some(dir) = path.parent() {
+        if std::fs::create_dir_all(dir).is_err() {
+            eprintln!(
+                "[regente] broker não iniciou: não consegui criar {}",
+                dir.display()
+            );
+            return;
+        }
+        // Diretório só do usuário: ninguém mais enxerga nem alcança o socket.
+        let _ = std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700));
+    }
+    let _ = std::fs::remove_file(&path); // socket antigo de uma execução anterior com o mesmo pid
+    let listener = match UnixListener::bind(&path) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("[regente] broker não iniciou: {e}");
+            return;
+        }
+    };
+    let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+    loop {
+        match listener.accept().await {
+            Ok((conn, _)) => {
+                tauri::async_runtime::spawn(serve_connection(ctx.clone(), conn));
+            }
+            Err(_) => tokio::time::sleep(Duration::from_millis(200)).await,
+        }
+    }
+}
+
+#[cfg(not(any(windows, unix)))]
 pub async fn serve(_ctx: Ctx) {
-    eprintln!("[regente] broker por named pipe só está implementado para Windows");
+    eprintln!("[regente] broker não implementado para esta plataforma");
 }
 
 /// Executa o comando de pré-checagem de uma rotina (PowerShell, até 60 s) e devolve a saída.
@@ -897,13 +937,28 @@ pub fn run_pre(cmd: &str, cwd: Option<&str>) -> Option<String> {
     use std::io::Read;
     use std::process::{Command, Stdio};
     use std::sync::atomic::{AtomicBool, Ordering};
-    // Força UTF-8 na saída do PowerShell (senão sai em OEM e os acentos viram lixo).
-    let script = format!("[Console]::OutputEncoding=[Text.Encoding]::UTF8; {cmd}");
-    let mut c = Command::new("powershell.exe");
-    c.args(["-NoProfile", "-NonInteractive", "-Command", &script])
-        .stdin(Stdio::null())
+    #[cfg(windows)]
+    let mut c = {
+        // Força UTF-8 na saída do PowerShell (senão sai em OEM e os acentos viram lixo).
+        let script = format!("[Console]::OutputEncoding=[Text.Encoding]::UTF8; {cmd}");
+        let mut c = Command::new("powershell.exe");
+        c.args(["-NoProfile", "-NonInteractive", "-Command", &script]);
+        c
+    };
+    #[cfg(not(windows))]
+    let mut c = {
+        let mut c = Command::new("sh");
+        c.args(["-c", cmd]);
+        c
+    };
+    c.stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        c.process_group(0); // grupo próprio: dá para encerrar a árvore sem atingir o app
+    }
     if let Some(d) = cwd.filter(|d| !d.trim().is_empty() && std::path::Path::new(d).is_dir()) {
         c.current_dir(d);
     }
@@ -967,7 +1022,16 @@ fn kill_process_tree(pid: u32) {
         .creation_flags(0x0800_0000)
         .output();
 }
-#[cfg(not(windows))]
+#[cfg(unix)]
+fn kill_process_tree(pid: u32) {
+    // O filho foi criado com `process_group(0)`: seu pid é o do grupo. Nunca atinge o grupo do app.
+    if pid > 1 {
+        unsafe {
+            libc::kill(-(pid as i32), libc::SIGKILL);
+        }
+    }
+}
+#[cfg(not(any(windows, unix)))]
 fn kill_process_tree(_pid: u32) {}
 
 /// Decodifica escapes de teclas: `\n` Enter, `\t` Tab, `\e` ESC, `\xNN` byte, `\\` barra. Máx. 512 bytes.
@@ -1066,6 +1130,7 @@ mod tests {
         assert_eq!(clean_label("abcdef", 3), "abc");
     }
 
+    #[cfg(windows)]
     #[test]
     fn run_pre_does_not_hang_when_a_grandchild_holds_the_pipe() {
         let t0 = Instant::now();
@@ -1081,6 +1146,7 @@ mod tests {
         assert!(out.is_some(), "deveria devolver o que foi lido até ali");
     }
 
+    #[cfg(windows)]
     #[test]
     fn run_pre_keeps_accents() {
         assert_eq!(
@@ -1089,6 +1155,7 @@ mod tests {
         );
     }
 
+    #[cfg(windows)]
     #[test]
     fn run_pre_returns_output_or_none() {
         assert_eq!(
@@ -1105,6 +1172,38 @@ mod tests {
             None,
             "código de saída != 0"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn run_pre_unix_returns_output_or_none() {
+        assert_eq!(
+            run_pre("echo ola rotina", None).as_deref(),
+            Some("ola rotina")
+        );
+        assert_eq!(run_pre("true", None), None, "sem saída não acorda o agente");
+        assert_eq!(
+            run_pre("echo x; exit 3", None),
+            None,
+            "código de saída != 0"
+        );
+        assert_eq!(
+            run_pre("echo 'ação útil'", None).as_deref(),
+            Some("ação útil")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn run_pre_unix_does_not_hang_when_a_grandchild_holds_the_pipe() {
+        let t0 = Instant::now();
+        let out = run_pre("sleep 25 & echo oi", None);
+        assert!(
+            t0.elapsed() < Duration::from_secs(20),
+            "run_pre travou por {:?}",
+            t0.elapsed()
+        );
+        assert_eq!(out.as_deref(), Some("oi"));
     }
 
     #[test]

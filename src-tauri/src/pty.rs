@@ -334,7 +334,17 @@ fn kill_tree(pid: u32) {
         .output();
 }
 
-#[cfg(not(windows))]
+#[cfg(unix)]
+fn kill_tree(pid: u32) {
+    // O PTY cria uma sessão nova: o pid do filho é também o id do grupo de processos.
+    if pid > 1 {
+        unsafe {
+            libc::kill(-(pid as i32), libc::SIGKILL);
+        }
+    }
+}
+
+#[cfg(not(any(windows, unix)))]
 fn kill_tree(_pid: u32) {}
 
 #[cfg(test)]
@@ -387,7 +397,7 @@ mod tests {
         m.spawn(
             SpawnSpec {
                 id: "t1".into(),
-                program: "cmd.exe".into(),
+                program: (if cfg!(windows) { "cmd.exe" } else { "sh" }).into(),
                 args: vec!["/c".into(), "echo regente-ok".into()],
                 cwd: None,
                 env: HashMap::new(),
@@ -427,7 +437,7 @@ mod tests {
         m.spawn(
             SpawnSpec {
                 id: "t2".into(),
-                program: "cmd.exe".into(),
+                program: (if cfg!(windows) { "cmd.exe" } else { "sh" }).into(),
                 args: vec![],
                 cwd: None,
                 env: HashMap::new(),

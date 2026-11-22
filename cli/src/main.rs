@@ -157,9 +157,10 @@ fn main() {
         return;
     }
     if cmd == "mcp-config" {
-        let exe = std::env::current_exe()
-            .ok()
-            .and_then(|p| p.parent().map(|d| d.join("regente-mcp.exe")));
+        let exe = std::env::current_exe().ok().and_then(|p| {
+            p.parent()
+                .map(|d| d.join(format!("regente-mcp{}", std::env::consts::EXE_SUFFIX)))
+        });
         let command = exe
             .map(|p| p.display().to_string())
             .unwrap_or_else(|| "regente-mcp".into());

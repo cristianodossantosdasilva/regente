@@ -53,7 +53,10 @@ fn app_info(st: St) -> AppInfo {
         cli_available: st
             .cli_dir
             .as_ref()
-            .map(|d| d.join("regente.exe").exists())
+            .map(|d| {
+                d.join(format!("regente{}", std::env::consts::EXE_SUFFIX))
+                    .exists()
+            })
             .unwrap_or(false),
         default_shell: sys::default_shell(),
         home: std::env::var("USERPROFILE")
@@ -483,11 +486,18 @@ fn git_worktree_add(cwd: String, name: String) -> Result<String, String> {
 // ---------- app ----------
 
 fn data_dir() -> PathBuf {
-    std::env::var_os("APPDATA")
-        .or_else(|| std::env::var_os("HOME"))
+    #[cfg(windows)]
+    let base = std::env::var_os("APPDATA").map(PathBuf::from);
+    #[cfg(target_os = "macos")]
+    let base = std::env::var_os("HOME")
+        .map(|h| PathBuf::from(h).join("Library").join("Application Support"));
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let base = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
-        .unwrap_or_else(std::env::temp_dir)
-        .join("Regente")
+        .or_else(|| {
+            std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local").join("share"))
+        });
+    base.unwrap_or_else(std::env::temp_dir).join("Regente")
 }
 
 fn find_cli_dir() -> Option<PathBuf> {

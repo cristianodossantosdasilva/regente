@@ -50,7 +50,19 @@ pub fn call(env: &Env, method: &str, mut params: Value) -> Result<Value, String>
     Ok(v["result"].clone())
 }
 
-fn open_pipe(path: &str) -> Result<std::fs::File, String> {
+/// Conexão com o broker: arquivo do named pipe (Windows) ou socket Unix.
+#[cfg(unix)]
+type Conn = std::os::unix::net::UnixStream;
+#[cfg(not(unix))]
+type Conn = std::fs::File;
+
+#[cfg(unix)]
+fn open_pipe(path: &str) -> Result<Conn, String> {
+    Conn::connect(path).map_err(|e| format!("não consegui conectar ao Regente ({path}): {e}"))
+}
+
+#[cfg(not(unix))]
+fn open_pipe(path: &str) -> Result<Conn, String> {
     let mut last = String::new();
     // ERROR_PIPE_BUSY (231) é transitório: tenta algumas vezes.
     for _ in 0..20 {

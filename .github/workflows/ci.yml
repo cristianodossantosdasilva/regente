@@ -58,5 +58,7 @@ jobs:
         run: |
           npx tsc --noEmit
           npm test
-      - name: Compila o CLI (o broker ainda é só Windows; veja docs/PORTING.md)
+      - name: Compila o CLI
         run: cargo check -p regente-cli
+      - name: Testes do Rust (experimental; veja docs/PORTING.md)
+        run: cargo test --workspace -- --test-threads=1
