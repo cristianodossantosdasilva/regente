@@ -2,6 +2,12 @@
 //! e mede a memória agregada da árvore de processos.
 #![cfg(any(windows, unix))]
 
+/// ~400 linhas de saída por terminal (cmd.exe no Windows, sh nas demais plataformas).
+#[cfg(windows)]
+const LOAD_CMD: &str = "for /L %i in (1,1,400) do @echo linha-%i-carga\r";
+#[cfg(unix)]
+const LOAD_CMD: &str = "i=1; while [ $i -le 400 ]; do echo linha-$i-carga; i=$((i+1)); done\r";
+
 use regente_lib::pty::{ExitSink, OutputSink, PtyManager, SpawnSpec};
 use regente_lib::sys::tree_usage;
 use std::collections::HashMap;
@@ -45,11 +51,7 @@ fn twenty_terminals_stay_responsive_and_bounded() {
 
     // Todos produzem bastante saída (~400 linhas cada).
     for i in 0..N {
-        m.write(
-            &format!("t{i}"),
-            b"for /L %i in (1,1,400) do @echo linha-%i-carga\r",
-        )
-        .unwrap();
+        m.write(&format!("t{i}"), LOAD_CMD.as_bytes()).unwrap();
     }
     let deadline = Instant::now() + Duration::from_secs(40);
     loop {
