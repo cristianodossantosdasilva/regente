@@ -1,6 +1,6 @@
 //! Carga: 20 terminais simultâneos com saída contínua. Verifica funcionamento, dormência (sem eventos)
 //! e mede a memória agregada da árvore de processos.
-#![cfg(windows)]
+#![cfg(any(windows, unix))]
 
 use regente_lib::pty::{ExitSink, OutputSink, PtyManager, SpawnSpec};
 use regente_lib::sys::tree_usage;

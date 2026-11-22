@@ -350,7 +350,9 @@ fn kill_tree(_pid: u32) {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)]
     use std::sync::mpsc;
+    #[allow(unused_imports)]
     use std::time::Duration;
 
     #[test]

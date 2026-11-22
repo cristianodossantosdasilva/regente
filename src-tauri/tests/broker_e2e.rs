@@ -1,5 +1,5 @@
-//! Teste de integração da orquestração: broker real (named pipe) + PTYs reais (cmd.exe) + cliente da CLI.
-#![cfg(windows)]
+//! Teste de integração da orquestração: broker real (named pipe no Windows, socket Unix nas demais) + PTYs reais + cliente da CLI.
+#![cfg(any(windows, unix))]
 
 use regente_client::{call, Env};
 use regente_lib::broker::{serve, Ctx, Emit};
@@ -728,21 +728,7 @@ fn oversize_request_line_is_rejected_without_killing_the_broker() {
     use std::io::{Read, Write};
     let h = setup("bigline", vec![]);
     let a = h.env("a");
-    let mut f = (0..40)
-        .find_map(|_| {
-            match std::fs::OpenOptions::new()
-                .read(true)
-                .write(true)
-                .open(&a.pipe)
-            {
-                Ok(f) => Some(f),
-                Err(_) => {
-                    std::thread::sleep(Duration::from_millis(100));
-                    None
-                }
-            }
-        })
-        .expect("abrir o pipe");
+    let mut f = connect_raw(&a.pipe);
     let big = vec![b'x'; 1_200_000];
     let _ = f.write_all(&big);
     let _ = f.write_all(b"\n");
@@ -752,4 +738,33 @@ fn oversize_request_line_is_rejected_without_killing_the_broker() {
     // o broker continua atendendo
     assert!(call(&a, "ping", json!({})).is_ok());
     h.cleanup();
+}
+
+/// Conexão crua ao broker (arquivo do named pipe no Windows, socket Unix nas demais plataformas).
+trait Raw: std::io::Read + std::io::Write {}
+impl<T: std::io::Read + std::io::Write> Raw for T {}
+
+#[cfg(windows)]
+fn connect_raw(path: &str) -> Box<dyn Raw> {
+    let f = (0..40)
+        .find_map(|_| {
+            match std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(path)
+            {
+                Ok(f) => Some(f),
+                Err(_) => {
+                    std::thread::sleep(Duration::from_millis(100));
+                    None
+                }
+            }
+        })
+        .expect("abrir o pipe");
+    Box::new(f)
+}
+
+#[cfg(unix)]
+fn connect_raw(path: &str) -> Box<dyn Raw> {
+    Box::new(std::os::unix::net::UnixStream::connect(path).expect("conectar ao socket"))
 }
