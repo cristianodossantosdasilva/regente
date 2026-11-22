@@ -231,7 +231,11 @@ fn send_ask_reply_read_notes_and_rules() {
 
     // read: A lê a saída de B
     let t = call(&a, "read", json!({"peer": "kiro", "last": 50})).unwrap();
-    assert!(t["text"].as_str().unwrap().contains("revise o modulo X"));
+    assert!(
+        t["text"].as_str().unwrap().contains("revise o modulo X"),
+        "saída lida do par: {:?}",
+        t["text"]
+    );
 
     // notas conectadas: leitura e escrita
     assert_eq!(
