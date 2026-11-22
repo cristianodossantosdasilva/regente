@@ -62,12 +62,23 @@ pub fn which(name: &str) -> Option<String> {
 }
 
 pub fn default_shell() -> String {
-    if which("pwsh.exe").is_some() {
-        "pwsh.exe".into()
-    } else if cfg!(windows) {
-        "powershell.exe".into()
+    if cfg!(windows) {
+        if which("pwsh.exe").is_some() {
+            "pwsh.exe".into()
+        } else {
+            "powershell.exe".into()
+        }
     } else {
-        std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into())
+        unix_shell(std::env::var("SHELL").ok())
+    }
+}
+
+/// Shell padrão no Unix: o `$SHELL` do usuário se for um caminho absoluto; senão `/bin/sh`.
+/// Nunca procura executáveis do Windows (`pwsh.exe`), que o WSL expõe no PATH por interoperabilidade.
+pub fn unix_shell(env_shell: Option<String>) -> String {
+    match env_shell {
+        Some(sh) if sh.starts_with('/') && !sh.trim().is_empty() => sh,
+        _ => "/bin/sh".into(),
     }
 }
 
@@ -111,6 +122,18 @@ pub fn base64(data: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unix_shell_uses_env_shell_or_falls_back() {
+        assert_eq!(unix_shell(Some("/bin/zsh".into())), "/bin/zsh");
+        assert_eq!(
+            unix_shell(Some("pwsh.exe".into())),
+            "/bin/sh",
+            "nunca um executável do Windows"
+        );
+        assert_eq!(unix_shell(Some("".into())), "/bin/sh");
+        assert_eq!(unix_shell(None), "/bin/sh");
+    }
 
     #[test]
     fn base64_matches_known_vectors() {
