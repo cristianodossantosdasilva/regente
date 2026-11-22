@@ -1,11 +1,11 @@
 # Port para Linux e macOS
 
-**Estado atual: o Regente só roda no Windows.** Este documento é o plano para quem quiser levá-lo a Linux e macOS. O Tauri, o React, o xterm.js e o `portable-pty` já são multiplataforma; o que prende o projeto ao Windows é um conjunto **pequeno e bem localizado** de pontos, listado abaixo.
+**Estado atual: Windows é suportado; Linux e macOS são experimentais** (o backend passa nos testes; a interface ainda não foi validada por pessoas). Este documento descreve o que foi feito e o que falta. O Tauri, o React, o xterm.js e o `portable-pty` já são multiplataforma; o que prende o projeto ao Windows é um conjunto **pequeno e bem localizado** de pontos, listado abaixo.
 
 > Nenhuma das mudanças abaixo foi feita nem testada: o mantenedor desenvolve no Windows. Quem fizer o port deve **rodar a suíte de testes na plataforma** (veja [TESTING.md](TESTING.md)) e abrir um PR por etapa.
 
-## Estado do port (branch `port/unix`, PR #1)
-O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**. O macOS é validado apenas pelo CI do GitHub (veja o PR).
+## Estado do port
+O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**; no macOS, **validado apenas pelo CI do GitHub** (runner `macos-latest`: compila o app e passa os testes do backend).
 
 | Verificação | Resultado |
 |---|---|
@@ -16,7 +16,8 @@ O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**. O
 | Linux: abrir o app sob **Xvfb** (tela virtual) | ✅ o processo sobe e fica de pé; o broker cria `…/regente/broker-<pid>.sock` com diretório `0700` e socket `0600`; os dados vão para `$XDG_DATA_HOME/Regente` |
 | Linux: **criar terminais pela interface**, rodar `regente …` dentro deles, E2E de interface | ❌ **não verificado**: o WebKitGTK não expõe o DevTools Protocol do WebView2; é preciso `tauri-driver`/WebDriver |
 | Linux: build de **release**, empacotamento (deb/AppImage) | ❌ não verificado |
-| macOS | ❌ só pelo CI do GitHub (runner `macos-latest`, hardware Apple real) |
+| **macOS** (CI do GitHub, hardware Apple real): compilar o app e `cargo test --workspace` | ✅ passa (com um ajuste no teste de `read`, veja "Limitação conhecida") |
+| macOS: abrir a interface, terminais, E2E | ❌ não verificado por ninguém |
 
 > **macOS e virtualização**: não use hackintosh nem VM de macOS em hardware não-Apple (a licença da Apple proíbe). O caminho legítimo e gratuito é o CI do GitHub (`macos-latest`) ou um Mac de verdade.
 

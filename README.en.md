@@ -8,8 +8,8 @@ An infinite canvas to orchestrate **coding agents** (Claude Code, Kiro, Antigrav
 | Platform | Status |
 |---|---|
 | **Windows 10/11 x64** | ✅ Supported and tested |
-| **Linux** | 🚧 **Not supported yet** (the broker uses a Windows named pipe). Port plan: [docs/PORTING.md](docs/PORTING.md) |
-| **macOS** | 🚧 **Not supported yet** (same reason) |
+| **Linux** | 🧪 **Experimental.** The backend (Unix-socket broker, terminals, routines, coordinator) passes its tests on Ubuntu 24.04 and the app builds and starts. The **UI has not been validated** by a person or by E2E yet. No installer: build from source ([docs/INSTALL.md](docs/INSTALL.md), Portuguese) |
+| **macOS** | 🧪 **Experimental.** GitHub CI (real macOS) builds the app and passes the backend tests. **Nobody has used the UI on a Mac yet.** No installer: build from source |
 
 ## Install (Windows)
 Download `Regente_<version>_x64-setup.exe` from the Releases page, verify the published SHA-256, run it (per-user install, no admin needed). Releases are not signed by a certificate authority, so SmartScreen may warn you. Details, portable install and building from source: [docs/INSTALL.md](docs/INSTALL.md) (Portuguese).

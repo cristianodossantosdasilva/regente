@@ -1,6 +1,7 @@
 # Changelog
 
 ## Não lançado
+- **Linux e macOS (experimental)**: broker por socket Unix, encerramento de grupos de processos, pré-execução por `sh`, pasta de dados por plataforma. Backend testado no Ubuntu 24.04 (56 testes de Rust) e no CI do macOS; interface ainda não validada.
 - Release: `scripts/release.ps1` remove caminhos pessoais dos binários; `tauri.bundle.conf.json` separa os recursos do instalador (`cargo test` funciona em cópia nova).
 - `regente peers` com identidade e estado; `status`, `notify`, `debug`, `keys` (permissão por conexão); notas por faixa/`edit`/`write`; `ask --batch`.
 - Coordenador: `recruit`/`connect`/`dismiss` por CLI e MCP (máx. 6 recrutados, sem recursão, pausa e auditoria).

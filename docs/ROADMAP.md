@@ -11,4 +11,4 @@
 ## Pendências conhecidas
 - Assinatura de código por autoridade certificadora: não feita. Os instaladores publicados não são assinados e trazem o SHA-256 (veja [INSTALL.md](INSTALL.md)). `scripts/sign.ps1` é um auxílio **opcional** para assinar localmente com um certificado criado por você.
 - Testar o instalador NSIS em mais máquinas (foi instalado e validado em uma máquina Windows 11).
-- **Port para Linux e macOS** (broker por socket Unix etc.): plano em [PORTING.md](PORTING.md).
+- **Linux e macOS**: backend portado e testado (Ubuntu 24.04; CI no macOS); faltam validar a interface, E2E por WebDriver, instaladores (deb/AppImage/dmg) e a limitação do `read` no bash do macOS. Veja [PORTING.md](PORTING.md).

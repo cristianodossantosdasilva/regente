@@ -5,10 +5,10 @@
 | Plataforma | Situação | Observações |
 |---|---|---|
 | Windows 10/11 x64 | ✅ Suportado | Precisa do **WebView2 Runtime** (já vem no Windows 11 e nas versões atuais do Windows 10) |
-| Linux | 🚧 Não suportado ainda | Veja [PORTING.md](PORTING.md) |
-| macOS | 🚧 Não suportado ainda | Veja [PORTING.md](PORTING.md) |
+| Linux | 🧪 Experimental (compilar do código) | Backend testado no Ubuntu 24.04; interface **não validada**; sem instalador |
+| macOS | 🧪 Experimental (compilar do código) | O CI do GitHub compila e testa o backend; **ninguém usou a interface num Mac ainda**; sem instalador |
 
-> Se você usa Linux ou macOS hoje, **o Regente ainda não roda**. Não há binário nem instruções de instalação confiáveis para essas plataformas, e este documento não vai fingir o contrário. O trabalho necessário está descrito, passo a passo, em [PORTING.md](PORTING.md).
+> Em Linux e macOS **não há binário pronto**: é preciso compilar (seção abaixo). O estado detalhado, o que foi e o que não foi verificado, está em [PORTING.md](PORTING.md). Relatos de quem testar são muito bem-vindos.
 
 ## Windows: instalador (recomendado)
 
@@ -87,6 +87,27 @@ cargo test --workspace -- --test-threads=1
 | Testes de PTY falham | Rode com `--test-threads=1`; os testes abrem terminais reais |
 
 > A máquina do mantenedor tem um Visual Studio sem `lib\x64`; ele usa uma configuração **local** em `.cargo/config.toml` (ignorada pelo git) para contornar. Isso **não** é necessário em uma instalação normal do Build Tools.
+
+## Linux e macOS (experimental): compilar do código
+**Linux** (Ubuntu/Debian; verificado no Ubuntu 24.04):
+```bash
+sudo apt install build-essential curl wget file libxdo-dev libssl-dev \
+  libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev nodejs npm rustup
+rustup default stable
+```
+**macOS**: `xcode-select --install`, Rust (via [rustup](https://rustup.rs)) e Node.js 20+.
+
+Depois, nas duas plataformas:
+```bash
+git clone <url-do-repositorio> && cd regente
+npm ci
+cargo build -p regente-cli               # o app procura `regente` ao lado do executável
+npx tauri build --no-bundle              # use --debug para compilar mais rápido
+./target/release/regente-app             # (ou target/debug/regente-app com --debug)
+```
+Onde ficam os dados: Linux `~/.local/share/Regente` (ou `$XDG_DATA_HOME/Regente`); macOS `~/Library/Application Support/Regente`. O socket do broker fica em `$XDG_RUNTIME_DIR/regente/` (diretório `0700`, socket `0600`).
+
+**Limites desta versão**: o `regente read` pode perder o começo de linhas longas em shells com *readline* (bash do macOS); a tela de rotinas ainda diz "PowerShell" mas executa `sh -c`; o build de release e o empacotamento (deb, AppImage, dmg) não foram verificados.
 
 ## Verificar a instalação
 Abra um terminal **dentro do Regente** e rode:

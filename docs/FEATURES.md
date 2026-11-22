@@ -24,6 +24,7 @@ Objetivo: orquestração automatizada de agentes de código num canvas, leve, lo
 | Rotinas agendadas (a cada N, diária, semanal, única; pré-execução com `{{output}}`; lembretes; só criadas pela interface) | ✅ |
 | Andares: worktrees por tarefa, checkout de PR, status e integração (`land`) | 📋 |
 | Portal web controlável por agentes (árvore de acessibilidade com refs, clique, preencher, screenshot, logs do console, viewport/UA) | 📋 |
+| Linux e macOS (broker por socket Unix; backend testado, interface a validar; sem instalador) | 🧪 |
 | Ponte para agentes dentro do WSL | 📋 |
 | Estado de terminal confiável com parser headless (ocioso, replay exato) | 📋 |
 
