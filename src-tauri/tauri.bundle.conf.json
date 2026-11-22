@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "../target/release/regente.exe": "regente.exe",
+      "../target/release/regente-mcp.exe": "regente-mcp.exe"
+    }
+  }
+}

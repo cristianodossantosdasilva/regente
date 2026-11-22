@@ -1,0 +1,21 @@
+[package]
+name = "regente-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI e servidor MCP do Regente"
+license = "MIT"
+
+[lib]
+name = "regente_client"
+path = "src/lib.rs"
+
+[[bin]]
+name = "regente"
+path = "src/main.rs"
+
+[[bin]]
+name = "regente-mcp"
+path = "src/bin/mcp.rs"
+
+[dependencies]
+serde_json = "1"

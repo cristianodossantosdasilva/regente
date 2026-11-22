@@ -1,0 +1,7 @@
+{
+  "name": "regente-e2e",
+  "private": true,
+  "type": "module",
+  "description": "E2E contra o app nativo (WebView2 via DevTools Protocol)",
+  "dependencies": { "puppeteer-core": "^24.0.0" }
+}

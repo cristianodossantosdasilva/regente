@@ -1,0 +1,12 @@
+target/
+node_modules/
+*.log
+install.done
+.cargo/
+dist/
+.local/
+e2e/node_modules/
+e2e/out/
+Regente-autoassinado.cer
+.private/
+.regente/

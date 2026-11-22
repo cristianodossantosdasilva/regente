@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows (suportado)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - name: Tipos
+        run: npx tsc --noEmit
+      - name: Testes do front-end
+        run: npm test
+      - name: Testes do Rust (PTYs e pipes reais)
+        run: cargo test --workspace -- --test-threads=1
+      - name: Build do app
+        run: |
+          cargo build --release -p regente-cli
+          npx tauri build --no-bundle
+
+  linux-macos-experimental:
+    name: ${{ matrix.os }} (experimental)
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Dependências do Tauri (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libgtk-3-dev libxdo-dev libssl-dev
+      - run: npm ci
+      - name: Tipos e testes do front-end
+        run: |
+          npx tsc --noEmit
+          npm test
+      - name: Compila o CLI (o broker ainda é só Windows; veja docs/PORTING.md)
+        run: cargo check -p regente-cli
