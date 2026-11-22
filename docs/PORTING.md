@@ -4,29 +4,49 @@
 
 > Nenhuma das mudanças abaixo foi feita nem testada: o mantenedor desenvolve no Windows. Quem fizer o port deve **rodar a suíte de testes na plataforma** (veja [TESTING.md](TESTING.md)) e abrir um PR por etapa.
 
-## Estado do port (branch `port/unix`)
-O código das etapas 1 a 6 abaixo **já foi escrito** na branch `port/unix`, mas **nunca foi executado em Linux ou macOS**. O que foi verificado:
+## Estado do port (branch `port/unix`, PR #1)
+O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**. O macOS é validado apenas pelo CI do GitHub (veja o PR).
 
 | Verificação | Resultado |
 |---|---|
-| Testes completos no **Windows** (a lógica de conexão agora é compartilhada com o socket Unix) | ✅ 59 de Rust + 42 do front |
-| `cargo check -p regente-cli --target x86_64-unknown-linux-gnu` (o CLI e o cliente do socket) | ✅ compila |
-| `cargo check` do **app** para Linux/macOS | ❌ não foi possível no ambiente do autor (precisa do WebKitGTK/Xcode); **fica para o CI** |
-| Execução e testes em Linux/macOS | ❌ **pendente** — é aqui que a comunidade pode ajudar |
+| Windows: toda a suíte (a lógica de conexão é compartilhada com o socket Unix) | ✅ 59 testes de Rust, 42 do front |
+| **Linux** (Ubuntu 24.04 em WSL2): `cargo test --workspace -- --test-threads=1` | ✅ **56 testes**: 42 de unidade, **9 de integração do broker com PTYs reais e socket Unix** (tokens por terminal, coordenador, `keys`, rotinas e pré-execução, pausa, linha enorme), a carga de 20 terminais e os do MCP |
+| Linux: `tsc` e `npm test` | ✅ 42 testes do front |
+| Linux: compilar o app (`npx tauri build --debug --no-bundle`) | ✅ |
+| Linux: abrir o app sob **Xvfb** (tela virtual) | ✅ o processo sobe e fica de pé; o broker cria `…/regente/broker-<pid>.sock` com diretório `0700` e socket `0600`; os dados vão para `$XDG_DATA_HOME/Regente` |
+| Linux: **criar terminais pela interface**, rodar `regente …` dentro deles, E2E de interface | ❌ **não verificado**: o WebKitGTK não expõe o DevTools Protocol do WebView2; é preciso `tauri-driver`/WebDriver |
+| Linux: build de **release**, empacotamento (deb/AppImage) | ❌ não verificado |
+| macOS | ❌ só pelo CI do GitHub (runner `macos-latest`, hardware Apple real) |
+
+> **macOS e virtualização**: não use hackintosh nem VM de macOS em hardware não-Apple (a licença da Apple proíbe). O caminho legítimo e gratuito é o CI do GitHub (`macos-latest`) ou um Mac de verdade.
 
 | Etapa | Código na branch | Observação |
 |---|---|---|
-| 1. Transporte por socket Unix | ✅ escrito | `broker.rs::serve` (`#[cfg(unix)]`), cliente em `cli/src/lib.rs`; diretório `0700`, socket `0600` |
-| 2. Encerrar árvores de processos | ✅ escrito | `kill(-pgid, SIGKILL)` em `pty.rs` e `broker.rs` |
-| 3. Pré-execução de rotinas | ✅ escrito | `sh -c` fora do Windows, em grupo de processos próprio. A tela ainda diz "PowerShell" |
-| 4. Pasta de dados | ✅ escrito | `$XDG_DATA_HOME` / `~/.local/share/Regente` e `~/Library/Application Support/Regente` |
+| 1. Transporte por socket Unix | ✅ testado no Linux | `broker.rs::serve` (`#[cfg(unix)]`), cliente em `cli/src/lib.rs`; diretório `0700`, socket `0600` |
+| 2. Encerrar árvores de processos | ✅ testado no Linux | `kill(-pgid, SIGKILL)` em `pty.rs` e `broker.rs` |
+| 3. Pré-execução de rotinas | ✅ testado no Linux | `sh -c`, grupo de processos próprio. A tela ainda diz "PowerShell" |
+| 4. Pasta de dados | ✅ confirmado no Linux | `$XDG_DATA_HOME`/`~/.local/share/Regente`; macOS `~/Library/Application Support/Regente` (não verificado) |
 | 5. Sufixo de executável | ✅ escrito | `EXE_SUFFIX` |
-| 6. Shell padrão | ✅ já existia | `$SHELL`; o ramo POSIX de `spawn.ts` **nunca foi exercitado** |
+| 6. Shell padrão | 🟡 não exercitado pela interface | `$SHELL`; o ramo POSIX de `spawn.ts` precisa de teste pela UI |
 | 7. Empacotamento (deb/AppImage/dmg), ícones, assinatura | ❌ não feito | |
-| 8. Testes parametrizados | 🟡 parcial | terminal de teste (`sh`) e pré-execução; falta revisar o resto |
-| 9. CI Linux/macOS | 🟡 parcial | roda os testes em modo experimental |
+| 8. Testes parametrizados | ✅ feito | terminal de teste, pré-execução, carga e socket cru por plataforma |
+| 9. CI Linux/macOS | ✅ roda a suíte completa em modo experimental | |
 
-**Como ajudar agora**: faça o checkout da branch `port/unix` no Linux/macOS, rode `cargo test --workspace -- --test-threads=1` e abra uma issue ou PR com o resultado (erros de compilação, testes que falham, comportamento do terminal).
+### Como compilar e testar no Linux (verificado no Ubuntu 24.04)
+```bash
+sudo apt install build-essential curl wget file libxdo-dev libssl-dev \
+  libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev nodejs npm rustup xvfb
+rustup default stable
+git clone <repo> && cd regente && git checkout port/unix
+npm ci
+cargo build -p regente-cli                       # o app procura `regente` ao lado do executável
+cargo test --workspace -- --test-threads=1       # backend completo
+npm test                                         # front-end
+npx tauri build --debug --no-bundle              # app em target/debug/regente-app
+# abrir sem monitor (teste de fumaça):
+xvfb-run -a ./target/debug/regente-app
+```
+No WSL2 com WSLg (Windows 11) dá para abrir a janela do app direto, sem `xvfb-run`. Falta ainda um roteiro E2E para Linux (WebDriver).
 
 ## Pré-requisitos de build
 
