@@ -14,8 +14,9 @@ O código das etapas 1 a 6 abaixo está escrito e **foi exercitado no Linux**; n
 | Linux: `tsc` e `npm test` | ✅ 42 testes do front |
 | Linux: compilar o app (`npx tauri build --debug --no-bundle`) | ✅ |
 | Linux: abrir o app sob **Xvfb** (tela virtual) | ✅ o processo sobe e fica de pé; o broker cria `…/regente/broker-<pid>.sock` com diretório `0700` e socket `0600`; os dados vão para `$XDG_DATA_HOME/Regente` |
-| Linux: **E2E de interface** (`bash e2e/run-linux.sh`, WebDriver via `tauri-driver` + Xvfb): workspace, bash real, `regente debug/status/peers/send/ask/reply`, coordenador (`recruit`/`dismiss`) | ✅ **13 de 13** |
-| Linux: uso por uma pessoa, E2E dos demais recursos (nós, rotinas, templates, importação) | ❌ não verificado |
+| Linux: **E2E de interface** (`bash e2e/run-linux.sh`, WebDriver via `tauri-driver` + Xvfb): workspace, bash real, `regente debug/status/peers/send/ask/reply`, coordenador (`recruit`/`dismiss`) | ✅ **13 de 13** (`smoke.mjs`) |
+| Linux: nós, rotinas (pré-execução por `sh`, lembrete), templates, importação endurecida, **reinício do app** com restauração do workspace | ✅ **23 de 23** (`features.mjs`) |
+| Linux: uso por uma pessoa; terminais com agentes reais; esboço/diagrama/arquivo/navegador por dentro (só a criação é testada) | ❌ não verificado |
 | Linux: build de **release**, empacotamento (deb/AppImage) | ❌ não verificado |
 | **macOS** (CI do GitHub, hardware Apple real): compilar o app e `cargo test --workspace` | ✅ passa (com um ajuste no teste de `read`, veja "Limitação conhecida") |
 | macOS: abrir a interface, terminais, E2E | ❌ não verificado por ninguém. O `tauri-driver` **não suporta macOS** (não há driver para o WKWebView), então só uma pessoa com um Mac consegue validar a interface |
@@ -58,9 +59,9 @@ No WSL2 com WSLg (Windows 11) dá para abrir a janela do app direto, sem `xvfb-r
 sudo apt install webkit2gtk-driver xvfb xauth
 cargo install tauri-driver --locked
 cargo build -p regente-cli && npx tauri build --debug --no-bundle
-bash e2e/run-linux.sh          # 13 verificações; usa pastas temporárias, não toca nos seus dados
+bash e2e/run-linux.sh          # 36 verificações (smoke.mjs + features.mjs); usa pastas temporárias, não toca nos seus dados
 ```
-O roteiro está em `e2e/webdriver/smoke.mjs` (cliente WebDriver cru, sem dependências). Para ampliar a cobertura (nós, rotinas, templates, importação), siga o padrão dos roteiros do Windows em `e2e/*.mjs`.
+Os roteiros estão em `e2e/webdriver/` (`smoke.mjs` e `features.mjs`, com um cliente WebDriver cru e sem dependências). Para ampliar a cobertura, siga o padrão dos roteiros do Windows em `e2e/*.mjs`.
 
 ## Pré-requisitos de build
 

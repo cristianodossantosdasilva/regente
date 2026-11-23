@@ -68,7 +68,7 @@ Capturas de tela ficam em `e2e/out/` (ignorado pelo git).
 > **Agentes reais nos testes**: `agents.mjs` **nunca** usa flags de bypass de permissão (`--trust-all-tools`, `--dangerously-skip-permissions`). As aprovações são manuais.
 
 ### E2E de interface no Linux
-`bash e2e/run-linux.sh` (veja os pré-requisitos no cabeçalho do script): sobe uma tela virtual (Xvfb), o `tauri-driver` e roda `e2e/webdriver/smoke.mjs` por WebDriver. Cobre: abrir o app, criar workspace, abrir um terminal com o shell real, `regente debug/status/peers/send/ask/reply`, coordenador, `recruit` e `dismiss` (13 verificações). Roda no CI do Ubuntu. Não existe equivalente no macOS (o `tauri-driver` não o suporta).
+`bash e2e/run-linux.sh` (veja os pré-requisitos no cabeçalho do script): sobe uma tela virtual (Xvfb), o `tauri-driver` e roda `e2e/webdriver/smoke.mjs` por WebDriver. `smoke.mjs` (13 verificações) cobre: abrir o app, criar workspace, terminal com o shell real, `regente debug/status/peers/send/ask/reply`, coordenador, `recruit` e `dismiss`. `features.mjs` (23) cobre: rotinas (execução manual, pré-execução por `sh` com `{{output}}`, sem saída, lembrete), criação de nós e zona pela paleta, templates, importação de um workspace hostil (o coordenador é removido e a pré-execução **não** roda) e o **reinício do app** com restauração do workspace. Roda no CI do Ubuntu. Não existe equivalente no macOS (o `tauri-driver` não o suporta).
 
 ## Escrevendo testes
 - **Regra de orquestração nova** → teste no `orchestrator.rs` (puro) **e** um caso negativo no `broker_e2e.rs` (o que deve ser recusado).
