@@ -66,9 +66,10 @@ try {
 
   await atPrompt("Worker");
   await s.typeIn(first, 'regente ask Worker "tudo certo?" --wait');
+  // O id da PERGUNTA vem na linha "... pergunta (id xxxxxxxx): ..." (a mensagem `send` anterior também tem um id).
   const id = await waitFor(async () => {
-    const m = (await s.termText("Worker")).match(/id ([0-9a-f]{8})/g);
-    return m ? m[m.length - 1].replace("id ", "") : null;
+    const m = (await s.termText("Worker")).match(/pergunta \(id ([0-9a-f]{8})\)/);
+    return m ? m[1] : null;
   });
   check("pergunta chega ao Worker com um id", !!id, id ?? "");
   if (id) {
