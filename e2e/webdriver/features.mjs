@@ -19,15 +19,7 @@ try {
   const shell = (await s.nodeTitles())[0];
   await waitFor(async () => ((await s.termText(shell)).trim().length > 3 ? true : null), 20000);
 
-  // ---- nós
-  for (const [q, title] of [["nova nota", "Nota"], ["novo esboço", "Esboço"], ["novo diagrama", "Diagrama"], ["novo preview de arquivo", "Arquivo"], ["novo navegador", "Navegador"]]) {
-    await s.palette(q);
-    check(`paleta cria o nó "${title}"`, !!(await waitFor(async () => ((await s.nodeTitles()).includes(title) ? true : null), 8000)), (await s.nodeTitles()).join(","));
-  }
-  await s.palette("nova zona");
-  check("paleta cria uma zona", await s.has(".zone"));
-
-  // ---- rotinas
+  // ---- rotinas (primeiro, com o terminal visível: nós novos podem empurrá-lo para fora da vista e deixá-lo dormente)
   await s.palette("rotinas");
   check("paleta abre a tela de rotinas", await s.has(".routine-list"));
   const addRoutine = async ({ title, text, preRun, reminder }) => {
@@ -58,6 +50,14 @@ try {
   check("lembrete não é injetado no terminal", !(await s.termText(shell)).includes("hora-da-pausa-linux"));
   await s.shortcut("Escape");
   await sleep(400);
+
+  // ---- nós
+  for (const [q, title] of [["nova nota", "Nota"], ["novo esboço", "Esboço"], ["novo diagrama", "Diagrama"], ["novo preview de arquivo", "Arquivo"], ["novo navegador", "Navegador"]]) {
+    await s.palette(q);
+    check(`paleta cria o nó "${title}"`, !!(await waitFor(async () => ((await s.nodeTitles()).includes(title) ? true : null), 8000)), (await s.nodeTitles()).join(","));
+  }
+  await s.palette("nova zona");
+  check("paleta cria uma zona", await s.has(".zone"));
 
   // ---- templates
   const before = (await s.nodeTitles()).length;
