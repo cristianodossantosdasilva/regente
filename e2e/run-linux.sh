@@ -11,8 +11,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP="${1:-$ROOT/target/debug/regente-app}"
 [ -x "$APP" ] || { echo "app não encontrado: $APP"; exit 2; }
 [ -x "$(dirname "$APP")/regente" ] || { echo "falta o CLI ao lado do app: rode 'cargo build -p regente-cli'"; exit 2; }
+# O WebKitWebDriver pode estar fora do PATH (depende do pacote/distribuição).
+if ! command -v WebKitWebDriver >/dev/null; then
+  for d in /usr/lib/*/webkit2gtk-4.1 /usr/lib/*/webkit2gtk-4.0 /usr/lib/webkit2gtk-4.1 /usr/libexec/webkit2gtk-4.1; do
+    [ -x "$d/WebKitWebDriver" ] && export PATH="$d:$PATH" && break
+  done
+fi
 command -v tauri-driver >/dev/null || { echo "tauri-driver não instalado (cargo install tauri-driver --locked)"; exit 2; }
-command -v WebKitWebDriver >/dev/null || { echo "WebKitWebDriver não instalado (apt install webkit2gtk-driver)"; exit 2; }
+command -v WebKitWebDriver >/dev/null || { echo "WebKitWebDriver não instalado (apt install webkit2gtk-driver, ou webkitgtk-webdriver em Ubuntu mais novo)"; exit 2; }
 
 export XDG_RUNTIME_DIR="$(mktemp -d)"; chmod 700 "$XDG_RUNTIME_DIR"
 export XDG_DATA_HOME="$(mktemp -d)"

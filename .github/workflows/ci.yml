@@ -65,7 +65,9 @@ jobs:
       - name: E2E de interface no Linux (WebDriver + Xvfb)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y webkit2gtk-driver xvfb xauth
+          sudo apt-get install -y xvfb xauth
+          # o nome do pacote do driver mudou entre versões do Ubuntu
+          sudo apt-get install -y webkit2gtk-driver || sudo apt-get install -y webkitgtk-webdriver
           cargo install tauri-driver --locked
           cargo build -p regente-cli
           npx tauri build --debug --no-bundle
