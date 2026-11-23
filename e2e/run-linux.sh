@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # E2E de interface no Linux (e, em princípio, macOS) com WebDriver: sobe uma tela virtual (Xvfb), o `tauri-driver`
-# e roda e2e/webdriver/smoke.mjs contra o app. Dados e socket ficam em pastas temporárias (não toca nos seus).
+# e roda e2e/webdriver/smoke.mjs (broker/CLI) e features.mjs (nós, rotinas, templates, importação, persistência) contra o app. Dados e socket ficam em pastas temporárias (não toca nos seus).
 #
 # Pré-requisitos (Ubuntu/Debian):  sudo apt install webkit2gtk-driver xvfb xauth
 #                                  cargo install tauri-driver --locked
@@ -31,6 +31,7 @@ xvfb-run -a -s "-screen 0 1920x1080x24" bash -c '
   sleep 3
   node smoke.mjs "$0"
   CODE=$?
+  node features.mjs "$0" || CODE=1
   kill $DRV 2>/dev/null
   exit $CODE
 ' "$APP"

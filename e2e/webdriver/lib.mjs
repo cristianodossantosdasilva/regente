@@ -83,6 +83,38 @@ export class Session {
     const active = await this.exec("return document.activeElement;");
     await this.keys(Object.values(active)[0], text + ENTER);
   }
+  /** Elemento (input/textarea/select) do formulário do modal cujo rótulo contém o texto. */
+  async fieldByLabel(fragment) {
+    const r = await this.exec(
+      "const f=arguments[0]; const l=[...document.querySelectorAll('.modal .form label')].find((x)=>x.textContent.includes(f)); return l? l.querySelector('input,textarea,select') : null;",
+      [fragment],
+    );
+    return r ? Object.values(r)[0] : null;
+  }
+  /** Abre a paleta (Ctrl+K), digita a busca e executa o primeiro resultado. */
+  async palette(query) {
+    await this.shortcut("k", { ctrlKey: true });
+    await sleep(500);
+    await this.keys(await this.find(".modal .big"), query + ENTER);
+    await sleep(700);
+  }
+  /** Cria um workspace pela aba Workspaces e espera o canvas. */
+  async createWorkspace(name, root) {
+    await this.clickText("Workspaces", ".tabs button");
+    await sleep(300);
+    await this.keys(await this.find('.form input[placeholder="Nome"]'), name);
+    await this.keys(await this.find(".form .inline input"), root);
+    await this.clickText("Criar", "button.primary");
+    await waitFor(() => this.has(".canvas"));
+    await sleep(800);
+  }
+  toastText() {
+    return this.exec("return document.querySelector('.toast')?.textContent ?? '';");
+  }
+  /** Aguarda o prompt do shell voltar (o broker envia o Enter ~180 ms depois de injetar uma mensagem). */
+  atPrompt(title) {
+    return waitFor(async () => (/[$#]\s*$/.test(await this.termText(title)) ? true : null), 10000);
+  }
   async close() {
     try {
       await this.req("DELETE", "");
